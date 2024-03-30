@@ -149,3 +149,4 @@ if __name__ == '__main__':
     clear()
     monitor = NetworkMonitor()
     display_connections(monitor.start())
+    print("testing")
