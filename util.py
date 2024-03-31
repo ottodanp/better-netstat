@@ -1,4 +1,5 @@
 from os import system, name, popen
+from time import sleep
 from typing import List
 
 from tabulate import tabulate
@@ -84,3 +85,10 @@ def maximize_terminal():
         system(f"printf '\033[8;{rows};{cols}t'")
     elif name == 'nt':
         system('mode con cols=9999 lines=9999')
+
+
+def display_loop(sleep_time: int, callback):
+    while True:
+        clear()
+        callback()
+        sleep(sleep_time)
