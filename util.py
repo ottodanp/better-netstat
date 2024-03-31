@@ -1,7 +1,7 @@
 from os import system, name, popen
 from typing import List
 
-from psutil import net_connections, Process
+from tabulate import tabulate
 
 from net import Connection
 
@@ -19,23 +19,6 @@ class Colours:
     YELLOW = '\033[33m'
 
 
-PORTS = {
-    "http": 80,
-    "https": 443,
-    "ftp": 21,
-    "ssh": 22,
-    "telnet": 23,
-    "smtp": 25,
-    "dns": 53,
-    "dhcp": 67,
-    "tftp": 69,
-    "http-alt": 8080,
-    "pop3": 110,
-    "nntp": 119,
-    "ntp": 123,
-    "imap": 143,
-}
-
 STATES = {
     "ESTABLISHED": f"{Colours.GREEN}ESTABLISHED{Colours.CLEAR}",
     "LISTEN": f"{Colours.CYAN}LISTENING{Colours.CLEAR}",
@@ -49,18 +32,13 @@ STATES = {
     "LAST_ACK": f"{Colours.FAIL}LAST_ACK{Colours.CLEAR}",
     "CLOSING": f"{Colours.FAIL}CLOSING{Colours.CLEAR}",
     "UNKNOWN": f"{Colours.FAIL}UNKNOWN{Colours.CLEAR}",
-    "NONE": f"",
-    "None": "None"
+    "NONE": "",
+    "None": ""
 }
 
 PROTOCOLS = {
     "TCP": f"{Colours.YELLOW}TCP{Colours.CLEAR}",
     "UDP": f"{Colours.BLUE}UDP{Colours.CLEAR}"
-}
-
-PROTOCOL_NUMBERS = {
-    1: "TCP",
-    2: "UDP",
 }
 
 RELATIONSHIPS = {
@@ -76,40 +54,24 @@ DIRECTIONS = {
     "UNKNOWN": f"{Colours.FAIL}UNKNOWN{Colours.CLEAR}"
 }
 
-UNKNOWN_ADDRESSES = ["-1", "*", "0.0.0.0"]
-LOOPBACKS = ["127.", "192.168", "10."]
-
-
-def addr_relationship(address: str) -> str:
-    if address in UNKNOWN_ADDRESSES:
-        return "UNKNOWN"
-
-    if any([address.startswith(s) for s in LOOPBACKS]):
-        return "LOCAL"
-
-    if address.startswith("172."):
-        parts = address.split(".")
-        if 16 <= int(parts[1]) <= 31:
-            return "LOCAL"
-
-    return "REMOTE"
-
 
 def sort_connections(connections: List[Connection], protocol: str) -> List[Connection]:
     return sorted([c for c in connections if c.protocol == protocol], key=lambda x: x.process_name)
 
 
-def get_netstat() -> List[Connection]:
-    connections = net_connections()
-    return [Connection(protocol=PROTOCOL_NUMBERS.get(conn.type),
-                       local_address=conn.laddr.ip,
-                       foreign_address=conn.raddr.ip if conn.raddr else "",
-                       local_port=conn.laddr.port,
-                       foreign_port=conn.raddr.port if conn.raddr else -1,
-                       state=conn.status,
-                       pid=conn.pid,
-                       process=Process(conn.pid) if conn.pid else None)
-            for conn in connections if PROTOCOL_NUMBERS.get(conn.type) is not None]
+def display_connections(connections: List[Connection], display_headers: List[str]) -> None:
+    tcp_data = sort_connections(connections, "TCP")
+    udp_data = sort_connections(connections, "UDP")
+    data = map(lambda x: list(x), tcp_data + udp_data)
+    n = []
+    for d in data:
+        d[0] = PROTOCOLS[d[0]]
+        d[5] = STATES[d[5]]
+        d[8] = RELATIONSHIPS[d[8]]
+        if len(d) == 10:
+            d[9] = DIRECTIONS[d[9]]
+        n.append(d)
+    print(tabulate(n, headers=display_headers), f"\nTotal Connections: {len(connections)}")
 
 
 def clear():

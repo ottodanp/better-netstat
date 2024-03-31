@@ -1,7 +1,28 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
-from util import *
+from psutil import Process, net_connections
+
+UNKNOWN_ADDRESSES = ["-1", "*", "0.0.0.0"]
+LOOPBACKS = ["127.", "192.168", "10."]
+U, R, L = "UNKNOWN", "REMOTE", "LOCAL"
+
+PROTOCOL_NUMBERS = {
+    1: "TCP",
+    2: "UDP",
+}
+
+
+def check_172_address(address: str) -> bool:
+    parts = address.split(".")
+    return True if len(parts) != 4 \
+        else (16 <= int(parts[1]) <= 31) and (0 <= int(parts[2]) <= 255) and (0 <= int(parts[3]) <= 255)
+
+
+def addr_relationship(address: str) -> str:
+    return U if address in UNKNOWN_ADDRESSES \
+        else L if any([address.startswith(s) for s in LOOPBACKS]) or (
+            address.startswith("127.") and check_172_address(address)) else R
 
 
 class Connection:
@@ -43,9 +64,9 @@ class Connection:
         ) if self._process_started != -1 else ""
         started = "" if started == "00:00:00" else started
 
-        yield from [PROTOCOLS[self._protocol], self._local_address, self._local_port, self._foreign_address,
-                    self._foreign_port, STATES[self._state], self._pid, self._process_name,
-                    RELATIONSHIPS[self._relationship], started, self._total_interactions, self._total_data]
+        yield from [self._protocol, self._local_address, self._local_port, self._foreign_address,
+                    self._foreign_port, self._state, self._pid, self._process_name,
+                    self._relationship, started, self._total_interactions, self._total_data]
 
     @property
     def protocol(self) -> str:
@@ -158,3 +179,16 @@ class Connection:
     @total_data.setter
     def total_data(self, total_data: int) -> None:
         self._total_data = total_data
+
+
+def get_netstat() -> List[Connection]:
+    connections = net_connections()
+    return [Connection(protocol=PROTOCOL_NUMBERS.get(conn.type),
+                       local_address=conn.laddr.ip,
+                       foreign_address=conn.raddr.ip if conn.raddr else "",
+                       local_port=conn.laddr.port,
+                       foreign_port=conn.raddr.port if conn.raddr else -1,
+                       state=conn.status,
+                       pid=conn.pid,
+                       process=Process(conn.pid) if conn.pid else None)
+            for conn in connections if PROTOCOL_NUMBERS.get(conn.type) is not None]
