@@ -1,4 +1,9 @@
 from os import system, name, popen
+from typing import List
+
+from psutil import net_connections, Process
+
+from net import Connection
 
 
 class Colours:
@@ -71,12 +76,15 @@ DIRECTIONS = {
     "UNKNOWN": f"{Colours.FAIL}UNKNOWN{Colours.CLEAR}"
 }
 
+UNKNOWN_ADDRESSES = ["-1", "*", "0.0.0.0"]
+LOOPBACKS = ["127.", "192.168", "10."]
+
 
 def addr_relationship(address: str) -> str:
-    if address in ["-1", "*", "0.0.0.0"]:
+    if address in UNKNOWN_ADDRESSES:
         return "UNKNOWN"
 
-    if any([address.startswith(s) for s in ["127.", "192.168", "10."]]):
+    if any([address.startswith(s) for s in LOOPBACKS]):
         return "LOCAL"
 
     if address.startswith("172."):
@@ -85,6 +93,23 @@ def addr_relationship(address: str) -> str:
             return "LOCAL"
 
     return "REMOTE"
+
+
+def sort_connections(connections: List[Connection], protocol: str) -> List[Connection]:
+    return sorted([c for c in connections if c.protocol == protocol], key=lambda x: x.process_name)
+
+
+def get_netstat() -> List[Connection]:
+    connections = net_connections()
+    return [Connection(protocol=PROTOCOL_NUMBERS.get(conn.type),
+                       local_address=conn.laddr.ip,
+                       foreign_address=conn.raddr.ip if conn.raddr else "",
+                       local_port=conn.laddr.port,
+                       foreign_port=conn.raddr.port if conn.raddr else -1,
+                       state=conn.status,
+                       pid=conn.pid,
+                       process=Process(conn.pid) if conn.pid else None)
+            for conn in connections if PROTOCOL_NUMBERS.get(conn.type) is not None]
 
 
 def clear():
