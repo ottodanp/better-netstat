@@ -28,7 +28,7 @@ class ConnectionViewer:
         self._connections = get_netstat()
 
     def _input_listener(self) -> None:
-        while self.running:
+        while self._running:
             i = input()
             if i == "q":
                 print("Shutting Down...")
@@ -50,11 +50,3 @@ class ConnectionViewer:
     def stop(self) -> None:
         self._running = False
         self._display_thread.running = False
-
-    @property
-    def running(self) -> bool:
-        return self._running
-
-    @property
-    def paused(self) -> bool:
-        return self._paused

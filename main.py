@@ -19,7 +19,6 @@ def start_connection_viewer():
 
 def main():
     maximize_terminal()
-    clear()
     try:
         var = argv[1]
         if var == "monitor":
