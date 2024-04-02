@@ -1,11 +1,13 @@
-from threading import Thread
+from threading import Thread, Lock
 from typing import List
 
 from net import Connection, get_netstat
-from util import display_connections, display_loop, maximize_terminal, _Getch
+from util import display_connections, maximize_terminal, display_loop
 
 DISPLAY_HEADERS = ["Protocol", "Local Address", "Local Port", "Foreign Address", "Foreign Port", "State", "PID",
                    "Process Name", "Network Relationship", "Process Started"]
+
+pause = Lock()
 
 
 class ConnectionViewer:
@@ -19,31 +21,35 @@ class ConnectionViewer:
         self._paused = False
         self._display_thread = Thread(
             target=display_loop,
-            args=(5, self.display_callback, lambda: self.running, lambda: self.paused)
+            args=(5, self.display_callback, pause)
         )
 
     def _update_connections(self) -> None:
         self._connections = get_netstat()
 
     def _input_listener(self) -> None:
-        getch = _Getch()
         while self.running:
-            i = getch()
+            i = input()
             if i == "q":
                 print("Shutting Down...")
-                self._running = False
+                self.stop()
 
             elif i == "p":
-                self._paused = not self._paused
-                print("Paused...") if self.paused else print("Resumed...")
+                print("Paused")
+                with pause:
+                    input("Press Enter to Resume")
 
     def display_callback(self) -> None:
         self._update_connections()
         display_connections(self._connections, DISPLAY_HEADERS)
 
-    def begin_display(self) -> None:
+    def start(self) -> None:
         self._display_thread.start()
         self._input_listener()
+
+    def stop(self) -> None:
+        self._running = False
+        self._display_thread.running = False
 
     @property
     def running(self) -> bool:
@@ -57,4 +63,4 @@ class ConnectionViewer:
 if __name__ == '__main__':
     maximize_terminal()
     viewer = ConnectionViewer()
-    viewer.begin_display()
+    viewer.start()

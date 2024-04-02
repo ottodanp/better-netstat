@@ -1,6 +1,6 @@
 from threading import Thread
 from time import sleep
-from typing import List
+from typing import List, Self
 
 import pyshark
 from pyshark.packet.packet import Packet
@@ -25,7 +25,7 @@ class NetworkMonitor:
         self._connection_update_thread = Thread(target=self._connection_update_thread)
         self._active_connections = []
 
-    def start(self) -> "NetworkMonitor":
+    def start(self) -> Self:
         self._connection_update_thread.start()
         self._sniffer_thread.start()
 

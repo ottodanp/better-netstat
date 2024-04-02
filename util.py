@@ -1,4 +1,6 @@
+import platform
 from os import system, name, popen
+from threading import current_thread, Lock
 from time import sleep
 from typing import List
 
@@ -13,7 +15,7 @@ class Colours:
     CYAN = '\033[96m'
     GREEN = '\033[92m'
     WARNING = '\033[93m'
-    FAIL = '\033[91m'
+    RED = '\033[91m'
     CLEAR = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
@@ -29,10 +31,10 @@ STATES = {
     "SYN_RECEIVED": f"{Colours.GREEN}SYN_RECEIVED{Colours.CLEAR}",
     "FIN_WAIT1": f"{Colours.BLUE}FIN_WAIT_1{Colours.CLEAR}",
     "FIN_WAIT2": f"{Colours.BLUE}FIN_WAIT_2{Colours.CLEAR}",
-    "CLOSED": f"{Colours.FAIL}CLOSED{Colours.CLEAR}",
-    "LAST_ACK": f"{Colours.FAIL}LAST_ACK{Colours.CLEAR}",
-    "CLOSING": f"{Colours.FAIL}CLOSING{Colours.CLEAR}",
-    "UNKNOWN": f"{Colours.FAIL}UNKNOWN{Colours.CLEAR}",
+    "CLOSED": f"{Colours.RED}CLOSED{Colours.CLEAR}",
+    "LAST_ACK": f"{Colours.RED}LAST_ACK{Colours.CLEAR}",
+    "CLOSING": f"{Colours.RED}CLOSING{Colours.CLEAR}",
+    "UNKNOWN": f"{Colours.RED}UNKNOWN{Colours.CLEAR}",
     "NONE": "",
     "None": ""
 }
@@ -45,53 +47,15 @@ PROTOCOLS = {
 RELATIONSHIPS = {
     "LOCAL": f"{Colours.GREEN}LOCAL{Colours.CLEAR}",
     "REMOTE": f"{Colours.BLUE}REMOTE{Colours.CLEAR}",
-    "UNKNOWN": f"{Colours.FAIL}UNKNOWN{Colours.CLEAR}",
+    "UNKNOWN": f"{Colours.RED}UNKNOWN{Colours.CLEAR}",
     "LISTENER": f"{Colours.CYAN}LISTENER{Colours.CLEAR}"
 }
 
 DIRECTIONS = {
     "INCOMING": f"{Colours.GREEN}INCOMING{Colours.CLEAR}",
     "OUTGOING": f"{Colours.BLUE}OUTGOING{Colours.CLEAR}",
-    "UNKNOWN": f"{Colours.FAIL}UNKNOWN{Colours.CLEAR}"
+    "UNKNOWN": f"{Colours.RED}UNKNOWN{Colours.CLEAR}"
 }
-
-
-class _Getch:
-    def __init__(self):
-        try:
-            self.impl = _GetchWindows()
-        except ImportError:
-            self.impl = _GetchUnix()
-
-    def __call__(self):
-        return self.impl()
-
-
-class _GetchUnix:
-    def __init__(self):
-        pass
-
-    def __call__(self) -> str:
-        from sys import stdin
-        from tty import setraw
-        from termios import tcgetattr, tcsetattr, TCSADRAIN
-        fd = stdin.fileno()
-        old_settings = tcgetattr(fd)
-        try:
-            setraw(stdin.fileno())
-            char = stdin.read(1)
-        finally:
-            tcsetattr(fd, TCSADRAIN, old_settings)
-        return char
-
-
-class _GetchWindows:
-    def __init__(self):
-        pass
-
-    def __call__(self) -> str:
-        from msvcrt import getch
-        return getch().decode()
 
 
 def sort_connections(connections: List[Connection], protocol: str) -> List[Connection]:
@@ -118,18 +82,19 @@ def clear():
 
 
 def maximize_terminal():
-    if name == 'posix':
+    s = platform.system()
+    if s in ["Darwin", "Linux"]:
         rows, cols = popen('stty size', 'r').read().split()
         system(f"printf '\033[8;{rows};{cols}t'")
-    elif name == 'nt':
+    elif s == 'Windows':
         system('mode con cols=9999 lines=9999')
 
 
-def display_loop(sleep_time: int, display_callback: callable, running_callback: callable, paused_callback: callable):
-    while running_callback():
-        while paused_callback():
-            pass
+def display_loop(sleep_time: int, display_callback: callable, pause: Lock):
+    thread = current_thread()
+    while getattr(thread, "running", True):
+        with pause:
+            clear()
+            display_callback()
 
-        clear()
-        display_callback()
         sleep(sleep_time)
