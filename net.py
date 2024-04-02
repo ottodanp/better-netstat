@@ -5,24 +5,29 @@ from psutil import Process, net_connections
 
 UNKNOWN_ADDRESSES = ["-1", "*", "0.0.0.0"]
 LOOPBACKS = ["127.", "192.168", "10."]
-U, R, L = "UNKNOWN", "REMOTE", "LOCAL"
 
 PROTOCOL_NUMBERS = {
     1: "TCP",
     2: "UDP",
 }
 
+S_172 = "172"
+U, R, L, LI, LIS = "UNKNOWN", "REMOTE", "LOCAL", "LISTEN", "LISTENER"
+DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+NULL_START_TIME = "00:00:00"
+
 
 def check_172_address(address: str) -> bool:
     parts = address.split(".")
-    return True if len(parts) != 4 \
+    return False if parts[0] != S_172 \
+        else True if len(parts) != 4 \
         else (16 <= int(parts[1]) <= 31) and (0 <= int(parts[2]) <= 255) and (0 <= int(parts[3]) <= 255)
 
 
 def addr_relationship(address: str) -> str:
     return U if address in UNKNOWN_ADDRESSES \
         else L if any([address.startswith(s) for s in LOOPBACKS]) or (
-            address.startswith("127.") and check_172_address(address)) else R
+            address.startswith(S_172) and check_172_address(address)) else R
 
 
 class Connection:
@@ -51,18 +56,18 @@ class Connection:
         self._state = state
         self._pid = pid
         self._process = process
-        self._relationship = "LISTENER" if self._state == "LISTEN" else addr_relationship(self._foreign_address)
-        self._process_name = self._process.name() if self._process else "UNKNOWN"
+        self._relationship = LIS if self._state == LI else addr_relationship(self._foreign_address)
+        self._process_name = self._process.name() if self._process else U
         self._process_started = float(self._process.create_time()) if self._process else -1
         self._flag = f"{self._local_address}:{self._local_port} -> {self._foreign_address}:{self._foreign_port}"
 
     def __iter__(self) -> List[str]:
         started = (
             datetime.fromtimestamp(self._process_started)
-            .strftime("%Y-%m-%d %H:%M:%S")
+            .strftime(DATE_FORMAT)
             .split(" ")[1]
         ) if self._process_started != -1 else ""
-        started = "" if started == "00:00:00" else started
+        started = "" if started == NULL_START_TIME else started
 
         yield from [self._protocol, self._local_address, self._local_port, self._foreign_address,
                     self._foreign_port, self._state, self._pid, self._process_name,
@@ -72,113 +77,37 @@ class Connection:
     def protocol(self) -> str:
         return self._protocol
 
-    @protocol.setter
-    def protocol(self, protocol: str) -> None:
-        self._protocol = protocol
-
     @property
     def local_address(self) -> str:
         return self._local_address
-
-    @local_address.setter
-    def local_address(self, local_address: str) -> None:
-        self._local_address = local_address
 
     @property
     def foreign_address(self) -> str:
         return self._foreign_address
 
-    @foreign_address.setter
-    def foreign_address(self, foreign_address: str) -> None:
-        self._foreign_address = foreign_address
-
-    @property
-    def local_port(self) -> int:
-        return self._local_port
-
-    @local_port.setter
-    def local_port(self, local_port: int) -> None:
-        self._local_port = local_port
-
-    @property
-    def foreign_port(self) -> int:
-        return self._foreign_port
-
-    @foreign_port.setter
-    def foreign_port(self, foreign_port: int) -> None:
-        self._foreign_port = foreign_port
-
-    @property
-    def state(self) -> str:
-        return self._state
-
-    @state.setter
-    def state(self, state: str) -> None:
-        self._state = state
-
     @property
     def process_name(self) -> str:
         return self._process_name
 
-    @process_name.setter
-    def process_name(self, process_name: str) -> None:
-        self._process_name = process_name
-
-    @property
-    def pid(self) -> int:
-        return self._pid
-
-    @pid.setter
-    def pid(self, pid: int) -> None:
-        self._pid = pid
-
-    @property
-    def relationship(self) -> str:
-        return self._relationship
-
-    @relationship.setter
-    def relationship(self, relationship: str) -> None:
-        self._relationship = relationship
-
-    @property
-    def process(self) -> Optional[Process]:
-        return self._process
-
-    @process.setter
-    def process(self, process: Optional[Process]) -> None:
-        self._process = process
-
-    @property
-    def process_started(self) -> float:
-        return self._process_started
-
-    @process_started.setter
-    def process_started(self, process_started: float) -> None:
-        self._process_started = process_started
-
     @property
     def flag(self) -> str:
         return self._flag
-
-    @flag.setter
-    def flag(self, flag: str) -> None:
-        self._flag = flag
 
     @property
     def total_interactions(self) -> int:
         return self._total_interactions
 
     @total_interactions.setter
-    def total_interactions(self, total_interactions: int) -> None:
-        self._total_interactions = total_interactions
+    def total_interactions(self, value: int) -> None:
+        self._total_interactions = value
 
     @property
     def total_data(self) -> int:
         return self._total_data
 
     @total_data.setter
-    def total_data(self, total_data: int) -> None:
-        self._total_data = total_data
+    def total_data(self, value: int) -> None:
+        self._total_data = value
 
 
 def get_netstat() -> List[Connection]:
