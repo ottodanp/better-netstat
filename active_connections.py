@@ -1,5 +1,5 @@
 from net import get_netstat
-from util import display_connections, display_loop
+from util import display_connections, display_loop, maximize_terminal
 
 DISPLAY_HEADERS = ["Protocol", "Local Address", "Local Port", "Foreign Address", "Foreign Port", "State", "PID",
                    "Process Name", "Network Relationship", "Process Started"]
@@ -18,4 +18,5 @@ def main() -> None:
 
 
 if __name__ == '__main__':
+    maximize_terminal()
     main()
