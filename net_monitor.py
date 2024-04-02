@@ -6,7 +6,6 @@ import pyshark
 from pyshark.packet.packet import Packet
 
 from net import get_netstat, Connection
-from util import clear, maximize_terminal, display_connections, display_loop
 
 DISPLAY_HEADERS = ["Protocol", "Local Address", "Local Port", "Foreign Address", "Foreign Port", "State", "PID",
                    "Process Name", "Network Relationship", "Process Started", "Total Interactions", "Total Data"]
@@ -62,19 +61,3 @@ class NetworkMonitor:
     @property
     def active_connections(self) -> List[Connection]:
         return self._active_connections
-
-
-def main(m: NetworkMonitor):
-    display_loop(
-        sleep_time=5,
-        display_callback=lambda: display_connections(m.active_connections, DISPLAY_HEADERS),
-        running_callback=lambda: True,
-        paused_callback=lambda: False
-    )
-
-
-if __name__ == '__main__':
-    maximize_terminal()
-    clear()
-    monitor = NetworkMonitor()
-    main(monitor.start())

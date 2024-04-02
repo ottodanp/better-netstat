@@ -62,19 +62,20 @@ def sort_connections(connections: List[Connection], protocol: str) -> List[Conne
     return sorted([c for c in connections if c.protocol == protocol], key=lambda x: x.process_name)
 
 
+def add_formatting(dat: List) -> List:
+    dat[0] = PROTOCOLS[dat[0]]
+    dat[5] = STATES[dat[5]]
+    dat[8] = RELATIONSHIPS[dat[8]]
+    if len(dat) == 10:
+        dat[9] = DIRECTIONS[dat[9]]
+    return dat
+
+
 def display_connections(connections: List[Connection], display_headers: List[str]) -> None:
     tcp_data = sort_connections(connections, "TCP")
     udp_data = sort_connections(connections, "UDP")
-    data = map(lambda x: list(x), tcp_data + udp_data)
-    n = []
-    for d in data:
-        d[0] = PROTOCOLS[d[0]]
-        d[5] = STATES[d[5]]
-        d[8] = RELATIONSHIPS[d[8]]
-        if len(d) == 10:
-            d[9] = DIRECTIONS[d[9]]
-        n.append(d)
-    print(tabulate(n, headers=display_headers), f"\nTotal Connections: {len(connections)}")
+    data = map(lambda x: add_formatting(list(x)), tcp_data + udp_data)
+    print(tabulate(data, headers=display_headers), f"\nTotal Connections: {len(connections)}")
 
 
 def clear():
