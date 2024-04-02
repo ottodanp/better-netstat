@@ -5,7 +5,7 @@ DISPLAY_HEADERS = ["Protocol", "Local Address", "Local Port", "Foreign Address",
                    "Process Name", "Network Relationship", "Process Started"]
 
 
-def callback() -> None:
+def display_callback() -> None:
     connections = get_netstat()
     display_connections(connections, DISPLAY_HEADERS)
 
@@ -13,7 +13,8 @@ def callback() -> None:
 def main() -> None:
     display_loop(
         sleep_time=5,
-        callback=callback
+        callback=display_callback,
+        condition_callback=lambda: True
     )
 
 

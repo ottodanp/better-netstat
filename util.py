@@ -87,8 +87,8 @@ def maximize_terminal():
         system('mode con cols=9999 lines=9999')
 
 
-def display_loop(sleep_time: int, callback):
-    while True:
+def display_loop(sleep_time: int, callback: callable, condition_callback: callable):
+    while condition_callback():
         clear()
         callback()
         sleep(sleep_time)
