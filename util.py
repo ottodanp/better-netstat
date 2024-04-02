@@ -71,27 +71,27 @@ class _GetchUnix:
     def __init__(self):
         pass
 
-    def __call__(self):
-        import sys
-        import tty
-        import termios
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
+    def __call__(self) -> str:
+        from sys import stdin
+        from tty import setraw
+        from termios import tcgetattr, tcsetattr, TCSADRAIN
+        fd = stdin.fileno()
+        old_settings = tcgetattr(fd)
         try:
-            tty.setraw(sys.stdin.fileno())
-            ch = sys.stdin.read(1)
+            setraw(stdin.fileno())
+            char = stdin.read(1)
         finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        return ch
+            tcsetattr(fd, TCSADRAIN, old_settings)
+        return char
 
 
 class _GetchWindows:
     def __init__(self):
         pass
 
-    def __call__(self):
-        import msvcrt
-        return msvcrt.getch().decode()
+    def __call__(self) -> str:
+        from msvcrt import getch
+        return getch().decode()
 
 
 def sort_connections(connections: List[Connection], protocol: str) -> List[Connection]:
