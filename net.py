@@ -12,9 +12,8 @@ PROTOCOL_NUMBERS = {
 }
 
 S_172 = "172"
-U, R, L, LI, LIS = "UNKNOWN", "REMOTE", "LOCAL", "LISTEN", "LISTENER"
-DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
-NULL_START_TIME = "00:00:00"
+N, U, R, L, LI, LIS = "", "UNKNOWN", "REMOTE", "LOCAL", "LISTEN", "LISTENER"
+DATE_FORMAT, NULL_START_TIME = "%Y-%m-%d %H:%M:%S", "00:00:00"
 
 
 def check_172_address(address: str) -> bool:
@@ -66,8 +65,8 @@ class Connection:
             datetime.fromtimestamp(self._process_started)
             .strftime(DATE_FORMAT)
             .split(" ")[1]
-        ) if self._process_started != -1 else ""
-        started = "" if started == NULL_START_TIME else started
+        ) if self._process_started != -1 else N
+        started = N if started == NULL_START_TIME else started
 
         yield from [self._protocol, self._local_address, self._local_port, self._foreign_address,
                     self._foreign_port, self._state, self._pid, self._process_name,
@@ -114,7 +113,7 @@ def get_netstat() -> List[Connection]:
     connections = net_connections()
     return [Connection(protocol=PROTOCOL_NUMBERS.get(conn.type),
                        local_address=conn.laddr.ip,
-                       foreign_address=conn.raddr.ip if conn.raddr else "",
+                       foreign_address=conn.raddr.ip if conn.raddr else N,
                        local_port=conn.laddr.port,
                        foreign_port=conn.raddr.port if conn.raddr else -1,
                        state=conn.status,
