@@ -67,8 +67,9 @@ class NetworkMonitor:
 def main(m: NetworkMonitor):
     display_loop(
         sleep_time=5,
-        callback=lambda: display_connections(m.active_connections, DISPLAY_HEADERS),
-        condition_callback=lambda: True
+        display_callback=lambda: display_connections(m.active_connections, DISPLAY_HEADERS),
+        running_callback=lambda: True,
+        paused_callback=lambda: False
     )
 
 

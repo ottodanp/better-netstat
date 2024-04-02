@@ -125,11 +125,11 @@ def maximize_terminal():
         system('mode con cols=9999 lines=9999')
 
 
-def display_loop(sleep_time: int, callback: callable, running_callback: callable, paused_callback: callable):
+def display_loop(sleep_time: int, display_callback: callable, running_callback: callable, paused_callback: callable):
     while running_callback():
         while paused_callback():
             pass
 
         clear()
-        callback()
+        display_callback()
         sleep(sleep_time)
