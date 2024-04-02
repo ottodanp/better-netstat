@@ -30,7 +30,8 @@ def main():
             print("invalid input")
 
     except IndexError:
-        if (i := input("n => Network Monitor\nv => Connection Viewer\n").lower()) == "n":
+        i = input("n => Network Monitor\nv => Connection Viewer\n").lower()
+        if i == "n":
             start_network_monitor()
         elif i == "v":
             start_connection_viewer()
