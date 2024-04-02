@@ -14,17 +14,18 @@ class ConnectionViewer:
     def __init__(self):
         self._running = True
 
-    def update_connections(self) -> None:
+    def _update_connections(self) -> None:
         self._connections = get_netstat()
 
     def display_callback(self) -> None:
+        self._update_connections()
         display_connections(self._connections, DISPLAY_HEADERS)
 
     def begin_display(self) -> None:
         display_loop(
             sleep_time=5,
             callback=self.display_callback,
-            condition_callback=self.running
+            condition_callback=lambda: self.running
         )
 
     @property
