@@ -35,6 +35,7 @@ STATES = {
     "LAST_ACK": f"{Colours.RED}LAST_ACK{Colours.CLEAR}",
     "CLOSING": f"{Colours.RED}CLOSING{Colours.CLEAR}",
     "UNKNOWN": f"{Colours.RED}UNKNOWN{Colours.CLEAR}",
+    "SYN_RECV": f"{Colours.GREEN}SYN_RECV{Colours.CLEAR}",
     "NONE": "",
     "None": ""
 }
@@ -63,11 +64,11 @@ def sort_connections(connections: List[Connection], protocol: str) -> List[Conne
 
 
 def add_formatting(dat: List) -> List:
-    dat[0] = PROTOCOLS[dat[0]]
-    dat[5] = STATES[dat[5]]
-    dat[8] = RELATIONSHIPS[dat[8]]
+    dat[0] = PROTOCOLS.get(dat[0])
+    dat[5] = STATES.get(dat[5])
+    dat[8] = RELATIONSHIPS.get(dat[8])
     if len(dat) == 10:
-        dat[9] = DIRECTIONS[dat[9]]
+        dat[9] = DIRECTIONS.get(dat[9])
     return dat
 
 
