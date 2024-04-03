@@ -5,7 +5,7 @@ from net import Connection, get_netstat
 from util import display_connections, display_loop
 
 DISPLAY_HEADERS = ["Protocol", "Local Address", "Local Port", "Foreign Address", "Foreign Port", "State", "PID",
-                   "Process Name", "Network Relationship", "Process Started"]
+                   "Process Name", "Network Relationship", "Process Started", "", ""]
 
 pause = Lock()
 
